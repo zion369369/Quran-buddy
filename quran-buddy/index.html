@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Al-Quran Chatbot</title>
+  <!-- Using Amiri for Arabic calligraphy and Poppins for Latin text -->
+  <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ========================================================================= */
+    /* Global Styles - Dark & Elegant Islamic Theme */
+    /* ========================================================================= */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #121212;
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background-color: #000;
+      padding: 20px;
+      text-align: center;
+      border-bottom: 2px solid #d4af37;
+    }
+    header h1 {
+      font-family: 'Amiri', serif;
+      font-size: 3rem;
+      color: #d4af37;
+      margin-bottom: 5px;
+    }
+    header p { color: #aaa; font-size: 1.1rem; }
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+    }
+    /* ========================================================================= */
+    /* Chat Container Styles */
+    /* ========================================================================= */
+    .chat-container {
+      width: 100%;
+      max-width: 900px;
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-log {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #121212;
+    }
+    .message { margin-bottom: 15px; display: flex; align-items: flex-start; }
+    .message.user { justify-content: flex-end; }
+    .message img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+    .message-text {
+      background-color: #d4af37;
+      color: #121212;
+      padding: 12px 16px;
+      border-radius: 20px;
+      max-width: 80%;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    .message.user .message-text { background-color: #333; color: #f0f0f0; }
+    .chat-input {
+      display: flex;
+      border-top: 1px solid #333;
+      background-color: #1e1e1e;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+    .chat-input button {
+      padding: 15px 25px;
+      background-color: #d4af37;
+      border: none;
+      color: #121212;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+    .chat-input button:hover { background-color: #b9972c; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate { animation: fadeIn 0.5s ease-in; }
+    .typing {
+      background-color: #333;
+      color: #aaa;
+      padding: 12px 16px;
+      border-radius: 20px;
+      font-style: italic;
+    }
+    /* ========================================================================= */
+    /* FAQ Box Styles */
+    /* ========================================================================= */
+    .faq-box {
+      margin-top: 15px;
+      padding: 15px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.8);
+    }
+    .faq-box h3 { margin-bottom: 10px; font-size: 1.4rem; color: #d4af37; }
+    .faq-box ul { list-style: none; }
+    .faq-box li { margin-bottom: 8px; }
+    .faq-box a { color: #d4af37; text-decoration: none; cursor: pointer; }
+    .faq-box a:hover { text-decoration: underline; }
+    /* ========================================================================= */
+    /* Modal Styles for Routines */
+    /* ========================================================================= */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80%;
+      overflow-y: auto;
+      border: 2px solid #d4af37;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+    }
+    .modal-content h2 { margin-bottom: 10px; color: #d4af37; }
+    .close-modal { float: right; font-size: 1.8rem; cursor: pointer; color: #d4af37; }
+  </style>
+</head>
+<body>
+  <!-- ========================================================================= -->
+  <!-- Header Section -->
+  <!-- ========================================================================= -->
+  <header>
+    <h1>Al-Quran Chatbot</h1>
+    <p>Speak with the Quran—your eternal guide in every challenge</p>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- Main Chat Container -->
+  <!-- ========================================================================= -->
+  <main>
+    <div class="chat-container">
+      <div class="chat-log" id="chatLog">
+        <!-- Chat messages will be appended here -->
+      </div>
+      <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Ask about life challenges, Quranic guidance, or type 'FAQ' for common questions..." />
+        <button id="sendBtn">Send</button>
+      </div>
+      <!-- Predefined FAQ Box -->
+      <div class="faq-box" id="faqBox">
+        <h3>Frequently Asked Questions</h3>
+        <ul>
+          <li><a onclick="selectFAQ('How do I perform Salah correctly?')">How do I perform Salah correctly?</a></li>
+          <li><a onclick="selectFAQ('What is Ramadan?')">What is Ramadan?</a></li>
+          <li><a onclick="selectFAQ('Ayatul Kursi with meaning')">Ayatul Kursi with meaning</a></li>
+          <li><a onclick="selectFAQ('Surah Al-Fatiha in Arabic and translation')">Surah Al-Fatiha (Arabic & Translation)</a></li>
+          <li><a onclick="selectFAQ('Surah Al-Ikhlas in Arabic and translation')">Surah Al-Ikhlas (Arabic & Translation)</a></li>
+          <li><a onclick="selectFAQ('Surah Al-Falaq in Arabic and translation')">Surah Al-Falaq (Arabic & Translation)</a></li>
+          <li><a onclick="selectFAQ('Surah An-Nas in Arabic and translation')">Surah An-Nas (Arabic & Translation)</a></li>
+          <li><a onclick="selectFAQ('How do I deal with family problems?')">How do I deal with family problems?</a></li>
+          <li><a onclick="selectFAQ('How do I overcome romantic issues?')">How do I overcome romantic issues?</a></li>
+          <li><a onclick="selectFAQ('What to do about money troubles?')">What to do about money troubles?</a></li>
+          <li><a onclick="selectFAQ('How can I fight loneliness?')">How can I fight loneliness?</a></li>
+          <li><a onclick="selectFAQ('How do I resolve workplace conflicts?')">How do I resolve workplace conflicts?</a></li>
+          <li><a onclick="selectFAQ('What to do about career setbacks?')">What to do about career setbacks?</a></li>
+          <li><a onclick="selectFAQ('How to handle physical and mental health challenges?')">How to handle physical and mental health challenges?</a></li>
+          <li><a onclick="selectFAQ('Hi')">Hi</a></li>
+          <li><a onclick="selectFAQ('Hello')">Hello</a></li>
+          <li><a onclick="selectFAQ('How are you?')">How are you?</a></li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- Modal for Special Routines (Ramadan Planner & Namaj Routine) -->
+  <!-- ========================================================================= -->
+  <div class="modal" id="routineModal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeModal">&times;</span>
+      <div id="routineContent">
+        <!-- Dynamic routine content goes here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /***************************************************************************
+     * Load Entire Quran Data
+     * The file 'quranData.json' (placed locally) must contain the full Quran (all 114 surahs)
+     * with each surah's verses, translations, and tafsir.
+     ***************************************************************************/
+    let fullQuranData = [];
+    fetch('quranData.json')
+      .then(response => response.json())
+      .then(data => {
+        fullQuranData = data;
+        console.log("Full Quran data loaded.");
+      })
+      .catch(err => console.error("Failed to load Quran data", err));
+
+    /***************************************************************************
+     * Extended Knowledge Base
+     * Additional Quranic verses that target stress relief, peace, hope, and calm.
+     * Extend this array to include at least 100 entries.
+     ***************************************************************************/
+    const extendedKnowledge = [
+      { verse: `"O mankind, there has come to you instruction from your Lord and healing for what is in the breasts, and guidance and mercy for the believers." (Quran 10:57)`, 
+        explanation: "The Quran is a source of healing, guidance, and mercy—filling hearts with hope and peace." },
+      { verse: `"It is He who sent down tranquility into the hearts of the believers that they would add faith unto their faith." (Quran 48:4)`, 
+        explanation: "Tranquility comes when we remember Allah, reinforcing our faith and peace." },
+      { verse: `"And your Lord is going to give you, and you will be satisfied." (Quran 93:7)`, 
+        explanation: "After hardship comes relief and satisfaction—a promise to those who persevere." },
+      { verse: `"O my servants, fear your Lord. Verily, the Hour has come; none shall escape it except those whom He wills." (Inspired by Quranic themes)`, 
+        explanation: "Mindfulness of Allah guides us to live with purpose and prepares us for the inevitable." },
+      { verse: `"Indeed, Allah loves those who are constantly repentant and loves those who purify themselves." (Inspired by Quranic principles)`, 
+        explanation: "Regular repentance and self-purification bring inner peace and spiritual relief." },
+      { verse: `"Indeed, Allah commands justice and the doing of good." (Quran 16:90)`, 
+        explanation: "Upholding justice and goodness brings peace and balance to our lives." },
+      { verse: `"And We have not sent you, [O Muhammad], except as a mercy to the worlds." (Quran 21:107)`, 
+        explanation: "The Messenger of Allah is a mercy for all – a reminder of compassion and hope." },
+      { verse: `"And whoever is patient and forgives – indeed, that is of the matters [requiring] determination." (Quran 42:43)`, 
+        explanation: "Patience and forgiveness are powerful tools that ease stress and bring inner calm." },
+      { verse: `"And whoever puts his trust in Allah, then He will suffice him." (Quran 65:3)`, 
+        explanation: "Trust in Allah ensures that our needs are met and brings calm assurance." },
+      { verse: `"Indeed, with hardship comes ease." (Quran 94:6)`, 
+        explanation: "Every difficulty is paired with relief—an enduring promise to those who remain patient." },
+      { verse: `"Call upon Me; I will respond to you." (Quran 40:60)`, 
+        explanation: "Allah is always near and ready to answer our heartfelt supplications." },
+      { verse: `"So remember Me; I will remember you." (Quran 2:152)`, 
+        explanation: "Consistent remembrance of Allah brings serenity and renewal to the heart." },
+      { verse: `"O you who have believed, seek help through patience and prayer." (Quran 2:153)`, 
+        explanation: "Patience and prayer are the keys to overcoming stress and hardships." },
+      { verse: `"And do not lose hope, nor be sad." (Quran 3:139)`, 
+        explanation: "Keep hope alive, as despair is never from Allah; rely on His wisdom." },
+      { verse: `"And Allah is the best of planners." (Inspired by Quranic thought)`, 
+        explanation: "Trust that Allah’s plan is perfect and that every setback leads to a better outcome." }
+      // ... Add 90+ additional targeted entries here.
+    ];
+
+    /***************************************************************************
+     * Advanced Knowledge Base & Quranic Verses
+     * This sample dataset covers common issues and important quotes.
+     * Extend these categories as needed.
+     ***************************************************************************/
+    const knowledgeBase = [
+      {
+        // Emotional Healing
+        triggers: ["sad", "depressed", "hopeless", "negative", "unhappy", "low mood"],
+        responses: [
+          { verse: `"Allah does not burden a soul beyond that it can bear." (Quran 2:286)`, explanation: "Even in deep despair, know that Allah equips you with the strength to endure." },
+          { verse: `"Do not lose hope, nor be sad." (Quran 3:139)`, explanation: "Keep hope alive; trust that Allah's wisdom guides your every trial." },
+          { verse: `"And We will surely test you with something of fear and hunger... but give glad tidings to the patient." (Quran 2:155)`, explanation: "Patience in adversity leads to growth and eventual relief." }
+        ]
+      },
+      {
+        // Anxiety & Stress
+        triggers: ["anxious", "anxiety", "nervous", "stressed", "worry"],
+        responses: [
+          { verse: `"Verily, in the remembrance of Allah do hearts find rest." (Quran 13:28)`, explanation: "Calm your mind with dhikr and let Allah’s remembrance fill you with peace." },
+          { verse: `"And when My servants ask you about Me, indeed I am near." (Quran 2:186)`, explanation: "Allah is always near; turn to Him in times of worry and anxiety." },
+          { verse: `"So do not weaken and do not grieve..." (Quran 3:139)`, explanation: "Hold fast to your faith—relief and ease are promised by Allah." }
+        ]
+      },
+      {
+        // Anger & Frustration
+        triggers: ["angry", "anger", "frustrated", "mad"],
+        responses: [
+          { verse: `"The strongest among you is the one who controls his anger." (Hadith)`, explanation: "True strength comes from mastering your anger and channeling it positively." },
+          { verse: `"And lower your wing to the believers." (Quran 26:215)`, explanation: "Even in anger, humility and compassion should prevail." },
+          { verse: `"Those who restrain their anger are indeed strong." (Inspired by Quranic principles)`, explanation: "Self-control leads to inner peace and spiritual growth." }
+        ]
+      },
+      {
+        // Jealousy & Envy
+        triggers: ["jealous", "envy", "resentful"],
+        responses: [
+          { verse: `"Do not let your love be like a candle that burns out." (Inspired by Islamic teachings)`, explanation: "Focus on your blessings rather than envying others." },
+          { verse: `"Whoever guides someone to goodness will have a reward like one who did it." (Hadith)`, explanation: "Transform envy into positive actions that benefit others." },
+          { verse: `"And whoever fears Allah – He will make for him a way out." (Quran 65:2-3)`, explanation: "Trust in Allah to help you overcome feelings of envy and find solutions." }
+        ]
+      },
+      {
+        // Sleep & Insomnia
+        triggers: ["can't sleep", "insomnia", "sleepless", "restless"],
+        responses: [
+          { verse: `"And remember your Lord much, that you may succeed." (Quran 62:10, adapted)`, explanation: "Frequent remembrance of Allah soothes the mind and helps you sleep." },
+          { verse: `"Indeed, with hardship comes ease." (Quran 94:6)`, explanation: "No matter how restless you feel, relief is always promised." },
+          { verse: `"So remember Me; I will remember you." (Quran 2:152)`, explanation: "Let Allah’s remembrance calm your mind and ease your worries." }
+        ]
+      },
+      {
+        // Grief & Loss
+        triggers: ["grief", "loss", "heartbroken", "bereaved"],
+        responses: [
+          { verse: `"And it may be that you dislike a thing which is good for you." (Quran 2:216)`, explanation: "Even when loss feels unbearable, Allah may be preparing something better." },
+          { verse: `"Allah is with those who patiently persevere." (Quran 2:153)`, explanation: "Patience in the face of grief is rewarded with comfort and healing." },
+          { verse: `"No calamity befalls except with the permission of Allah." (Quran 64:11, adapted)`, explanation: "Every hardship has a purpose—trust in Allah's perfect plan." }
+        ]
+      },
+      {
+        // Financial & Career Challenges
+        triggers: ["financial", "money troubles", "career", "job", "setback"],
+        responses: [
+          { verse: `"And whoever fears Allah – He will make for him a way out and provide for him from where he does not expect." (Quran 65:2-3)`, explanation: "Even during financial or career struggles, trust that Allah provides." },
+          { verse: `"If you are grateful, I will surely increase you [in favor]." (Quran 14:7)`, explanation: "Gratitude can turn difficulties into blessings." },
+          { verse: `"And say, 'Do [as you will], for Allah will see your deeds...'" (Quran 9:105)`, explanation: "Work diligently, for Allah is aware of every effort you make." }
+        ]
+      },
+      {
+        // Family & Romantic Issues
+        triggers: ["family", "romantic", "relationship", "lonely", "conflict", "family problems", "romantic issues"],
+        responses: [
+          { verse: `"And the servants of the Most Merciful are those who walk upon the earth humbly..." (Quran 25:63)`, explanation: "Humility and kindness can heal broken relationships." },
+          { verse: `"The best among you are those who have the best manners and character." (Hadith)`, explanation: "Exhibit patience and respect to overcome family and romantic challenges." },
+          { verse: `"And speak to people good [words]." (Quran 2:83, adapted)`, explanation: "Use kind words and empathy to resolve conflicts and build stronger bonds." }
+        ]
+      },
+      {
+        // Physical & Mental Health Challenges
+        triggers: ["health", "illness", "sick", "injured", "mental health", "physical health"],
+        responses: [
+          { verse: `"And We send down of the Quran such things that are healing and mercy for the believers." (Quran 17:82)`, explanation: "The Quran provides both spiritual and emotional healing." },
+          { verse: `"Our Lord, do not impose blame upon us if we have forgotten or erred." (Quran 2:286, adapted)`, explanation: "In moments of weakness, turn to Allah’s mercy for comfort and healing." },
+          { verse: `"Allah does not burden a soul beyond that it can bear." (Quran 2:286)`, explanation: "You are stronger than you think; trust in Allah’s support during tough times." }
+        ]
+      },
+      {
+        // Ramadan Planner
+        triggers: ["ramadan", "fasting", "iftar", "suhoor", "ramadan planner"],
+        responses: [
+          { verse: `"O you who have believed, fasting has been prescribed to you as it was prescribed to those before you..." (Quran 2:183, adapted)`, explanation: "Ramadan is a time for spiritual reflection and renewal—embrace its blessings." },
+          { verse: `"And it is better for you that you fast." (Inspired by Quranic guidance)`, explanation: "Use fasting to purify your soul and strengthen your connection with Allah." },
+          { verse: `"Establish prayer and give zakah, and whatever good you put forward for yourselves—you will find it with Allah." (Quran 2:110)`, explanation: "Ramadan provides an opportunity to renew your faith and generosity." }
+        ]
+      },
+      {
+        // Namaj (Salah) Routine
+        triggers: ["namaj", "salah", "prayer", "namaz", "prayer routine"],
+        responses: [
+          { verse: `"Indeed, prayer prohibits immorality and wrongdoing." (Quran 29:45)`, explanation: "A consistent prayer routine brings both discipline and spiritual clarity." },
+          { verse: `"Establish prayer at the decline of the sun [from its meridian]..." (Quran 11:114, adapted)`, explanation: "Regular prayer anchors your day and brings tranquility to your soul." },
+          { verse: `"And remember the favor of Allah upon you and His covenant with which He bound you." (Quran 5:7, adapted)`, explanation: "Salah is a reminder of Allah’s countless blessings in your life." }
+        ]
+      }
+    ];
+
+    /***************************************************************************
+     * Function: searchFullQuran
+     * Searches the full Quran data for verses matching the query.
+     ***************************************************************************/
+    function searchFullQuran(query) {
+      let matches = [];
+      const lowerQuery = query.toLowerCase();
+      if (fullQuranData.length === 0) return "";
+      // Search across surahs and verses
+      for (const surah of fullQuranData) {
+        for (const verse of surah.verses) {
+          if (verse.translation.toLowerCase().includes(lowerQuery) || verse.text.toLowerCase().includes(lowerQuery)) {
+            matches.push({ surah: surah.name, number: surah.number, verse });
+          }
+        }
+      }
+      if (matches.length > 0) {
+        const match = matches[0];
+        return `<strong>Surah ${match.surah} (Chapter ${match.number}):</strong><br>
+                <p style="direction: rtl; font-size: 1.2rem;">${match.verse.text}</p>
+                <p><strong>Translation:</strong> ${match.verse.translation}</p>`;
+      }
+      return "";
+    }
+
+    /***************************************************************************
+     * Function: searchExtendedKnowledge
+     * Searches the extended knowledge array for additional Quranic verses.
+     ***************************************************************************/
+    function searchExtendedKnowledge(query) {
+      let matches = [];
+      const lowerQuery = query.toLowerCase();
+      for (const item of extendedKnowledge) {
+        if (item.verse.toLowerCase().includes(lowerQuery) || item.explanation.toLowerCase().includes(lowerQuery)) {
+          matches.push(item);
+        }
+      }
+      if (matches.length > 0) {
+        const match = matches[0];
+        return `<strong>Extended Quranic Guidance:</strong><br>
+                <blockquote>${match.verse}</blockquote>
+                <em>${match.explanation}</em>`;
+      }
+      return "";
+    }
+
+    /***************************************************************************
+     * Function: getBotResponse
+     * Returns a Quranic answer by checking for greetings, special routine requests,
+     * surah-specific queries, the predefined knowledge base, extended knowledge,
+     * and finally the full Quran data.
+     ***************************************************************************/
+    function getBotResponse(input) {
+      const lowerInput = input.toLowerCase();
+
+      // Greetings handling
+      const greetings = ["hi", "hello", "assalamu alaykum", "hey", "how are you"];
+      for (const greet of greetings) {
+        if (lowerInput === greet || lowerInput.startsWith(greet)) {
+          return `<strong>Wa alaykum assalam!</strong> I am here, ready to guide you with the wisdom of the Quran. How can I help you today?`;
+        }
+      }
+
+      // Special routine requests
+      if (lowerInput.includes("ramadan")) {
+        openRoutineModal("ramadan");
+        return `<strong>Opening Ramadan Planner...</strong>`;
+      }
+      if (lowerInput.includes("namaj") || lowerInput.includes("salah") || lowerInput.includes("prayer routine")) {
+        openRoutineModal("namaj");
+        return `<strong>Opening Namaj Routine...</strong>`;
+      }
+      
+      // Check if query mentions a surah name via full Quran data search
+      if (fullQuranData.length > 0) {
+        for (const surah of fullQuranData) {
+          if (lowerInput.includes(surah.name.toLowerCase())) {
+            let result = `<strong>Surah ${surah.name} (Chapter ${surah.number}):</strong>`;
+            if (surah.verses && surah.verses.length > 0) {
+              result += `<br><p style="direction: rtl; font-size: 1.2rem;">${surah.verses[0].text}</p>
+                         <p><strong>Translation:</strong> ${surah.verses[0].translation}</p>`;
+            }
+            return result;
+          }
+        }
+      }
+      
+      // Check predefined knowledge base categories
+      for (const category of knowledgeBase) {
+        if (category.triggers.some(trigger => lowerInput.includes(trigger))) {
+          const responses = category.responses;
+          const randomIndex = Math.floor(Math.random() * responses.length);
+          const { verse, explanation } = responses[randomIndex];
+          return `<strong>Quranic Guidance:</strong><br><blockquote>${verse}</blockquote><em>${explanation}</em>`;
+        }
+      }
+      
+      // Search extended knowledge for additional verses
+      let extendedResult = searchExtendedKnowledge(input);
+      if (extendedResult) { return extendedResult; }
+      
+      // Lastly, search the full Quran data
+      let fullQuranResult = searchFullQuran(input);
+      if (fullQuranResult) { return fullQuranResult; }
+      
+      // Fallback response (should not be reached)
+      return `<strong>Guidance:</strong> "Indeed, with hardship comes ease." (Quran 94:6)`;
+    }
+
+    function appendMessage(message, sender = 'bot', isHTML = false) {
+      const chatLog = document.getElementById('chatLog');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', sender, 'animate');
+      if (sender === 'bot') {
+        const botIcon = document.createElement('img');
+        botIcon.src = 'https://cdn-icons-png.flaticon.com/512/3079/3079048.png';
+        botIcon.alt = 'Bot';
+        messageDiv.appendChild(botIcon);
+      }
+      const textDiv = document.createElement('div');
+      textDiv.classList.add('message-text');
+      if (isHTML) { textDiv.innerHTML = message; }
+      else { textDiv.textContent = message; }
+      messageDiv.appendChild(textDiv);
+      document.getElementById('chatLog').appendChild(messageDiv);
+      document.getElementById('chatLog').scrollTop = document.getElementById('chatLog').scrollHeight;
+    }
+
+    function showTypingIndicator() {
+      const chatLog = document.getElementById('chatLog');
+      const typingDiv = document.createElement('div');
+      typingDiv.classList.add('message', 'bot', 'animate');
+      const botIcon = document.createElement('img');
+      botIcon.src = 'https://cdn-icons-png.flaticon.com/512/3079/3079048.png';
+      botIcon.alt = 'Bot';
+      typingDiv.appendChild(botIcon);
+      const textDiv = document.createElement('div');
+      textDiv.classList.add('message-text', 'typing');
+      textDiv.innerHTML = '<span>•</span><span>•</span><span>•</span>';
+      typingDiv.appendChild(textDiv);
+      document.getElementById('chatLog').appendChild(typingDiv);
+      document.getElementById('chatLog').scrollTop = document.getElementById('chatLog').scrollHeight;
+      return typingDiv;
+    }
+
+    function handleUserInput() {
+      const userInputElem = document.getElementById('userInput');
+      const userText = userInputElem.value.trim();
+      if (!userText) return;
+      appendMessage(userText, 'user');
+      userInputElem.value = '';
+      const typingIndicator = showTypingIndicator();
+      setTimeout(() => {
+        typingIndicator.remove();
+        const response = getBotResponse(userText);
+        appendMessage(response, 'bot', true);
+      }, 1000);
+    }
+
+    // FAQ function to simulate FAQ selection
+    function selectFAQ(faqText) {
+      appendMessage(faqText, 'user');
+      const typingIndicator = showTypingIndicator();
+      setTimeout(() => {
+        typingIndicator.remove();
+        const response = getBotResponse(faqText);
+        appendMessage(response, 'bot', true);
+      }, 1000);
+    }
+
+    // Event Listeners
+    document.getElementById('sendBtn').addEventListener('click', handleUserInput);
+    document.getElementById('userInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleUserInput();
+    });
+
+    /***************************************************************************
+     * Modal Functions for Routines (Ramadan Planner & Namaj Routine)
+     ***************************************************************************/
+    const routineModal = document.getElementById('routineModal');
+    const routineContent = document.getElementById('routineContent');
+    const closeModal = document.getElementById('closeModal');
+    function openRoutineModal(type) {
+      let data = routines[type];
+      if (data) {
+        routineContent.innerHTML = data.content;
+        routineModal.classList.add('active');
+      }
+    }
+    closeModal.addEventListener('click', () => { routineModal.classList.remove('active'); });
+    window.addEventListener('click', (e) => { if (e.target === routineModal) { routineModal.classList.remove('active'); } });
+
+    /***************************************************************************
+     * Initial Greeting
+     ***************************************************************************/
+    window.addEventListener('load', () => {
+      appendMessage('As-salāmu ʿalaykum! I am the Quran speaking to you. Ask me any question about life, faith, or guidance. You can also type "FAQ" for common questions.', 'bot');
+    });
+  </script>
+</body>
+</html>

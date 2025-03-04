@@ -1,0 +1,65 @@
+/* Existing styles... */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    text-align: center;
+    padding: 20px;
+    background-color: #0078fe;
+    color: white;
+}
+
+main {
+    padding: 20px;
+}
+
+input, button {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #0078fe;
+    color: white;
+    cursor: pointer;
+}
+
+#results .verse-box {
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+/* Chatbot styles */
+#chatbot {
+    margin-top: 20px;
+}
+
+#chat-output {
+    border: 1px solid #ccc;
+    padding: 10px;
+    height: 200px;
+    overflow-y: auto;
+    background-color: white;
+    border-radius: 5px;
+}
+
+#chat-input, #chat-send {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#chat-send {
+    background-color: #0078fe;
+    color: white;
+    cursor: pointer;
+}
